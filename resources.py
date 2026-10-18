@@ -45,12 +45,33 @@ class BooksResource:
 
     async def on_get(self, req, resp):
         """Handles GET requests to retrieve all books"""
+
+        #Leemos los parametros de búsqueda de la solicitud
         rating = req.get_param_as_float('rating')
+        pages = req.get_param_as_int('pages')
+        title = req.get_param('title')
+        limit = req.get_param_as_int('limit')
+        skip = req.get_param_as_int('skip')
+
+        #Se construye el diccionario de búsqueda basado en los parámetros proporcionados
         query = {}
         if rating is not None:
             query['average_rating'] = {'$gte': rating}
+        if pages is not None:
+            query['num_pages'] = {'$gte': pages}
+        if title is not None:
+            query['title'] = {'$regex': title, '$options': 'i'}
 
+        #Se crea el apuntador al primer libro
         books = self.db.books.find(query)
+
+        #Se aplica el límite y el salto si se proporcionan
+        #Explicar mi confusion donde mande estos como si fueran parametros del propio libro, cuando en realidad son parametros de la busqueda
+        if limit is not None:
+            books = books.limit(limit)
+        if skip is not None:
+            books = books.skip(skip)
+
         books_list = []
         for book in books:
             book['_id'] = str(book['_id'])

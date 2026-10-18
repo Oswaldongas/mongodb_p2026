@@ -22,12 +22,25 @@ def print_book(book):
         print(f"{k}: {book[k]}")
     print("="*50)
 
-def list_books(rating):
+#Enlista los libros que cumplan con los parametros de busqueda, si no se pasan parametros, lista todos los libros
+def list_books(rating, pages, title, limit, skip):
     suffix = "/books"
     endpoint = BOOKS_API_URL + suffix
-    params = {
-        "rating": rating
-    }
+
+    #Ahora lo construyo dinamicamente con los parámetros que me pasen
+    params = {}
+    if rating:
+        params["rating"] = rating
+    if pages:
+        params["pages"] = pages
+    if title:
+        params["title"] = title
+    if limit:
+        params["limit"] = limit
+    if skip:
+        params["skip"] = skip
+
+    #Convierte el diccionario en parametros de una url
     response = requests.get(endpoint, params=params)
     if response.ok:
         json_resp = response.json()
@@ -91,12 +104,22 @@ def main():
     parser = argparse.ArgumentParser()
 
     list_of_actions = ["search", "get", "update", "delete"]
+
+    #Lista de argumentos que puede recibir la terminal para interactuar con la API de libros
     parser.add_argument("action", choices=list_of_actions,
             help="Action to be user for the books library")
     parser.add_argument("-i", "--id",
             help="Provide a book ID which related to the book action", default=None)
     parser.add_argument("-r", "--rating",
             help="Search parameter to look for books with average rating equal or above the param (0 to 5)", default=None)
+    parser.add_argument("--pages",
+            help="Search parameter for number of pages (equal or above)", default=None)
+    parser.add_argument("-t", "--title", 
+            help="Search parameter for book title (partial match)", default=None)
+    parser.add_argument("--limit", 
+            help="Limit the number of results", type=int, default=None)
+    parser.add_argument("--skip", 
+            help="Number of results to skip", type=int, default=None)
 
     args = parser.parse_args()
 
@@ -109,11 +132,14 @@ def main():
         exit(1)
 
     if args.action == "search":
-        list_books(args.rating)
+        list_books(args.rating, args.pages, args.title, args.limit, args.skip)
+
     elif args.action == "get" and args.id:
         get_book_by_id(args.id)
+
     elif args.action == "update":
         update_book(args.id)
+
     elif args.action == "delete":
         delete_book(args.id)
 
