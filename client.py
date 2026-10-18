@@ -97,13 +97,28 @@ def delete_book(id):
     else:
         print(f"Error: {response}")
 
+#Nueva funcion para el agreggation
+def get_analytics():
+    endpoint = BOOKS_API_URL + "/books/analytics"
+    response = requests.get(endpoint)
+    if response.ok:
+        json_resp = response.json()
+        print("=== TOP 10 AUTORES DE JOYAS POCO CONOCIDAS ===")
+        for index, author in enumerate(json_resp, 1):
+            print(f"{index}. {author['_id']}")
+            print(f"   Libros 'Joya Poco Conocida': {author['hidden_gems_count']}")
+            print(f"   Calificación Promedio: {author['avg_rating']:.2f}")
+            print("-" * 40)
+    else:
+        print(f"Error: {response}")
+
 
 def main():
     log.info(f"Welcome to books catalog. App requests to: {BOOKS_API_URL}")
 
     parser = argparse.ArgumentParser()
 
-    list_of_actions = ["search", "get", "update", "delete"]
+    list_of_actions = ["search", "get", "update", "delete", "analytics"]
 
     #Lista de argumentos que puede recibir la terminal para interactuar con la API de libros
     parser.add_argument("action", choices=list_of_actions,
@@ -131,6 +146,7 @@ def main():
         log.error(f"Rating arg can only be used with search action")
         exit(1)
 
+    #Cambios para los nuevos parametros de busqueda
     if args.action == "search":
         list_books(args.rating, args.pages, args.title, args.limit, args.skip)
 
@@ -142,6 +158,10 @@ def main():
 
     elif args.action == "delete":
         delete_book(args.id)
+
+    #Para el analytics
+    elif args.action == "analytics":
+        get_analytics()    
 
 if __name__ == "__main__":
     main()

@@ -113,3 +113,43 @@ def validate_book_data(data):
             except ValueError:
                 raise falcon.HTTPBadRequest(f"Invalid data: {property} must be {book_types[property]}.")
     return data
+
+
+#Pipeline de agregación para el análisis de Joyas infravaloradas
+class AnalyticsResource:
+    def __init__(self, db):
+        self.db = db
+
+    async def on_get(self, req, resp):
+        """Maneja las peticiones GET para el análisis de Joyas infravaloradas"""
+        
+        # Definición del Aggregation Pipeline
+        pipeline = [
+            # 1. $match: Filtramos libros con calificación alta y pocas interacciones (criterio numérico)
+            {"$match": {
+                "average_rating": {"$gte": 4.5}, 
+                "ratings_count": {"$lt": 50}
+            }},
+            
+            # 2. $unwind: Separamos el arreglo de autores (criterio categórico/transformación)
+            {"$unwind": "$authors"},
+            
+            # 3. $group: Agrupamos por autor, contamos sus joyas y sacamos su promedio
+            {"$group": {
+                "_id": "$authors",
+                "hidden_gems_count": {"$sum": 1},
+                "avg_rating": {"$avg": "$average_rating"}
+            }},
+            
+            # 4. $sort: Ordenamos de mayor a menor cantidad de joyas ocultas (-1 es descendente)
+            {"$sort": {"hidden_gems_count": -1}},
+            
+            # 5. $limit: Extraemos únicamente el Top 10 de autores
+            {"$limit": 10}
+        ]
+
+        # Ejecutamos el pipeline en la base de datos
+        results = list(self.db.books.aggregate(pipeline))
+        
+        resp.media = results
+        resp.status = falcon.HTTP_200

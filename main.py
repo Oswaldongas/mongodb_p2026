@@ -3,7 +3,7 @@ import falcon.asgi
 from pymongo import MongoClient
 import logging
 
-from resources import BookResource, BooksResource
+from resources import BookResource, BooksResource, AnalyticsResource
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,7 +33,9 @@ app = falcon.asgi.App(middleware=[LoggingMiddleware()])
 # Instantiate the resources
 book_resource = BookResource(db)
 books_resource = BooksResource(db)
+analytics_resource = AnalyticsResource(db) #Nuevo
 
 # Add routes to serve the resources
+app.add_route('/books/analytics', analytics_resource)
 app.add_route('/books', books_resource)
 app.add_route('/books/{book_id}', book_resource)
