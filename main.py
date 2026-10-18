@@ -20,6 +20,13 @@ class LoggingMiddleware:
 client = MongoClient('mongodb://localhost:27017/')
 db = client.bookstore
 
+#Paso 2: Agregar indices
+#Mongo no es estupido, los crea una vez y si ya existen no hace nada
+#El 1 indicia que es ascendente, -1 seria descendente
+db.books.create_index([("average_rating", 1)])
+db.books.create_index([("pages", 1)])
+db.books.create_index([("title", "text")])
+
 # Create the Falcon application
 app = falcon.asgi.App(middleware=[LoggingMiddleware()])
 
