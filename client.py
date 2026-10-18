@@ -49,11 +49,40 @@ def get_book_by_id(id):
 
 
 def update_book(id):
-    pass
+    suffix = f"/books/{id}"
+    endpoint = BOOKS_API_URL + suffix
+    response = requests.get(endpoint)
+    if not response.ok:
+        print(f"Error: {response}")
+        return
+
+    book = response.json()
+    book.pop("_id", None)
+    print("Press Enter to keep the current value")
+    for k in book.keys():
+        value = input(f"{k} [{book[k]}]: ").strip()
+        if value:
+            if isinstance(book[k], list):
+                book[k] = [v.strip() for v in value.split(",")]
+            else:
+                book[k] = value
+
+    response = requests.put(endpoint, json=book)
+    if response.ok:
+        json_resp = response.json()
+        print_book(json_resp)
+    else:
+        print(f"Error: {response}")
 
 
 def delete_book(id):
-    pass
+    suffix = f"/books/{id}"
+    endpoint = BOOKS_API_URL + suffix
+    response = requests.delete(endpoint)
+    if response.ok:
+        print(f"Book {id} deleted")
+    else:
+        print(f"Error: {response}")
 
 
 def main():
